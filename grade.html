@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>年級課程 · 香港中文 K1–S6</title>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="index.html">香港中文 <span>K1–S6</span></a>
+  <nav class="nav">
+    <a href="index.html">課程</a>
+    <a href="index.html#assess">測驗</a>
+    <a href="index.html#about">依據</a>
+  </nav>
+</div></header>
+
+<main class="wrap" id="app">
+  <div class="crumb"><a href="index.html">課程總覽</a> ／ <span id="crumbStage"></span></div>
+  <section class="ghead" id="head"></section>
+
+  <nav class="tabs" id="tabs"></nav>
+
+  <div id="sections"></div>
+
+  <section class="panel" style="--c:#1b64f2;margin-top:18px">
+    <h3>測驗這一級</h3>
+    <p class="muted" style="margin:0 0 4px">三種難度，每份約 8 題，題目隨機抽出。做完即時批改並解釋。</p>
+    <div class="levels" id="levels"></div>
+  </section>
+
+  <footer id="foot"></footer>
+</main>
+
+<script src="assets/data/core.js"></script>
+<script src="assets/data/k.js"></script>
+<script src="assets/data/ks1.js"></script>
+<script src="assets/data/ks2.js"></script>
+<script src="assets/data/ks3.js"></script>
+<script src="assets/data/ks4.js"></script>
+<script>
+(function(){
+  function param(k){
+    var m = new RegExp('[?&]'+k+'=([^&]+)').exec(location.search);
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+  var gid = param('g') || 'p1';
+  var g = CN.byId(gid);
+  if(!g){ document.getElementById('app').innerHTML = '<p style="padding:40px 0">找不到這個年級。<a href="index.html">返回課程總覽</a></p>'; return; }
+  var st = CN.stageOf(g);
+  var meta = CN.gradeList.filter(function(x){return x.id===gid;})[0] || g;
+  document.documentElement.style.setProperty('--c', st.color);
+  document.title = g.name + '（' + g.age + '）· 香港中文 K1–S6';
+
+  document.getElementById('crumbStage').textContent = st.name + ' ' + st.range;
+
+  var words = g.words || [];
+  document.getElementById('head').innerHTML =
+    '<h1><em>'+g.name+'</em> <span style="font-size:15px;color:var(--sub);font-weight:500">'+meta.age+' · '+st.name+'</span></h1>'
+    + '<p class="muted" style="max-width:760px">'+g.summary+'</p>'
+    + '<div class="chips">'
+    + '<span class="chip hl">'+st.range+'</span>'
+    + '<span class="chip">詞語 '+words.length+' 個</span>'
+    + '<span class="chip">六大範疇</span>'
+    + '<span class="chip">3 級測驗</span>'
+    + '</div>';
+
+  // tabs
+  var tabs = document.getElementById('tabs');
+  tabs.innerHTML = CN.strands.map(function(s){
+    return '<a href="#s-'+s.id+'" data-id="'+s.id+'">'+s.name+'</a>';
+  }).join('') + '<a href="#s-words" data-id="words">詞彙表</a><a href="#s-texts" data-id="texts">篇章</a>';
+
+  // sections
+  var html = CN.strands.map(function(s){
+    var d = g.strands[s.id];
+    if(!d) return '';
+    var teach = (d.teach||[]).map(function(t){
+      return '<div class="t"><b>'+t.t+'</b><p>'+t.d+'</p></div>';
+    }).join('');
+    return '<section class="panel" id="s-'+s.id+'" style="--c:'+st.color+'">'
+      + '<h3>'+s.name+'<span class="muted" style="font-weight:400;font-size:13px"> · '+s.en+'</span></h3>'
+      + '<h4>學習重點</h4><ul class="focus">' + (d.focus||[]).map(function(f){return '<li>'+f+'</li>';}).join('') + '</ul>'
+      + '<h4>教學內容與示例</h4><div class="teach">' + teach + '</div>'
+      + '<div class="task"><b>課後任務：</b>' + (d.task||'') + '</div>'
+      + '</section>';
+  }).join('');
+
+  // words
+  html += '<section class="panel" id="s-words" style="--c:'+st.color+'">'
+    + '<h3>詞彙表 <span class="muted" style="font-weight:400;font-size:13px">粵拼 · 詞性 · 釋義 · 例句</span></h3>'
+    + '<div style="overflow-x:auto"><table class="vtable"><thead><tr><th>詞語</th><th>粵拼</th><th>詞性</th><th>釋義</th><th>例句</th></tr></thead><tbody>'
+    + words.map(function(w){
+        return '<tr><td class="w">'+w.w+'<button class="speak" data-say="'+w.w+'">讀</button></td>'
+          + '<td class="py">'+w.py+'</td><td class="py">'+w.pos+'</td>'
+          + '<td>'+w.mean+'</td><td class="ex">'+w.ex+'</td></tr>';
+      }).join('')
+    + '</tbody></table></div>'
+    + '<p class="muted" style="margin:10px 0 4px">詞語為該級示例，配合課文主題使用；粵拼依香港語言學學會方案。</p>'
+    + '</section>';
+
+  // texts
+  var texts = g.texts || [];
+  html += '<section class="panel" id="s-texts" style="--c:'+st.color+'">'
+    + '<h3>建議篇章與讀物</h3>'
+    + '<div class="tlist">' + texts.map(function(t,i){
+        return '<div class="ti"><span class="n">'+String(i+1).padStart(2,'0')+'</span>'
+          + '<div><b>'+t.t+'</b> <span>'+t.a+'</span><br><span>'+t.k+' · '+t.n+'</span></div></div>';
+      }).join('') + '</div>'
+    + '<p class="muted" style="margin:10px 0 4px">小學階段篇目對應教育局課程指引附錄「建議篇章（文言經典部分）」；中學階段為課程與 DSE 指定篇章。</p>'
+    + '</section>';
+
+  document.getElementById('sections').innerHTML = html;
+
+  // quiz levels
+  document.getElementById('levels').innerHTML = [
+    ['1','基礎','字詞辨義、聆聽，適合先診斷'],
+    ['2','進階','詞語運用、閱讀理解'],
+    ['3','挑戰','文言、文化、寫作知識']
+  ].map(function(l){
+    return '<a class="lvl" href="quiz.html?g='+gid+'&level='+l[0]+'" style="--c:'+st.color+'">'
+      + '<b>'+l[1]+'</b><span>'+l[2]+'</span></a>';
+  }).join('');
+
+  // prev/next
+  var prev = CN.prevGrade(gid), next = CN.nextGrade(gid);
+  document.getElementById('foot').innerHTML =
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">'
+    + (prev ? '<a class="btn ghost sm" href="grade.html?g='+prev.id+'">← '+prev.name+'</a>' : '')
+    + (next ? '<a class="btn sm" href="grade.html?g='+next.id+'" style="--c:'+st.color+'">'+next.name+' →</a>' : '')
+    + '<a class="btn ghost sm" href="index.html">全部年級</a></div>'
+    + '課程架構依教育局《中國語文教育學習領域課程指引》及《中國語文課程指引》；詞彙量屬參考區間，宜以校內課程為準。';
+
+  // tab behaviour
+  tabs.addEventListener('click', function(e){
+    var a = e.target.closest('a'); if(!a) return;
+    e.preventDefault();
+    var el = document.getElementById('s-'+a.dataset.id);
+    if(el) window.scrollTo({top: el.offsetTop - 108, behavior:'smooth'});
+    Array.prototype.forEach.call(tabs.children, function(x){ x.classList.remove('on'); });
+    a.classList.add('on');
+  });
+  tabs.firstElementChild.classList.add('on');
+
+  // TTS
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('.speak'); if(!b) return;
+    if(!('speechSynthesis' in window)){ alert('此瀏覽器不支援語音朗讀。'); return; }
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(b.dataset.say);
+    u.lang = 'zh-HK'; u.rate = 0.85;
+    speechSynthesis.speak(u);
+  });
+})();
+</script>
+</body>
+</html>

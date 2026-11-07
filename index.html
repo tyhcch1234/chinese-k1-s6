@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>香港中文課程 K1–S6 · 聽講讀寫文化詞彙</title>
+<meta name="description" content="由幼稚園 K1 到中六，按階段與年級整理香港中國語文課程：六大範疇教學內容、詞彙表、建議篇章與三級程度測驗。">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="index.html">香港中文 <span>K1–S6</span></a>
+  <nav class="nav">
+    <a href="index.html" class="on">課程</a>
+    <a href="index.html#assess">測驗</a>
+    <a href="index.html#about">依據</a>
+  </nav>
+</div></header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1>由 K1 到中六，<br>一條線睇清中文課程</h1>
+    <p>按教育局中國語文課程架構整理：五大階段、十五個年級，涵蓋聆聽、說話、閱讀、寫作、文化、詞彙六大範疇，每級附教學內容、詞彙表、建議篇章與三個難度的測驗。</p>
+    <div class="stats" id="stats"></div>
+  </section>
+
+  <h2 class="sec">選擇階段</h2>
+  <div class="stage-strip" id="stageStrip"></div>
+  <div class="grades" id="gradeGrid"></div>
+
+  <h2 class="sec" id="assess">六大範疇</h2>
+  <div class="strands" id="strandList"></div>
+
+  <h2 class="sec">怎樣用這個網站</h2>
+  <div class="panel" style="--c:#1b64f2">
+    <ul class="focus">
+      <li><b>按年級看課程：</b>點入任何一級，可看到該級在六大範疇的學習重點、教學示例與課後任務。</li>
+      <li><b>先診斷後補漏：</b>先做「基礎」測驗，8 題中錯 3 題以上，就回到該級的詞彙表與閱讀部分重練。</li>
+      <li><b>三級難度：</b>基礎（字詞辨義、聆聽）、進階（運用、閱讀理解）、挑戰（文言、文化、寫作知識），每級題目會隨機抽出。</li>
+      <li><b>跨級銜接：</b>頁尾有上一年級／下一年級，方便一次過看階段內的進程。</li>
+    </ul>
+  </div>
+
+  <h2 class="sec" id="about">課程依據與教材來源</h2>
+  <div class="panel" style="--c:#5b6572">
+    <ul class="focus">
+      <li>教育局《中國語文教育學習領域課程指引（小一至中六）》（2017）及《中國語文課程指引（小一至小六）》（2023）的九個學習範疇與教學原則。</li>
+      <li>《小學中國語文建議學習重點》及課程指引附錄「建議篇章（文言經典部分）」：第一、第二學習階段各 20 篇，本站已按年級編入「建議篇章」。</li>
+      <li>香港考試及評核局 2024 年起中國語文科評核安排：卷一閱讀（甲部指定篇章、乙部課外篇章）、卷二寫作（甲部實用寫作、乙部命題寫作），另設校本評核。</li>
+      <li>高中 12 篇指定文言篇章：〈論仁論孝論君子〉〈魚我所欲也〉〈逍遙遊（節錄）〉〈勸學（節錄）〉〈廉頗藺相如列傳（節錄）〉〈出師表〉〈師說〉〈始得西山宴遊記〉〈岳陽樓記〉〈六國論〉〈唐詩三首〉〈宋詞三首〉。</li>
+      <li>詞彙表與題目為本網站按課程要求編寫的示例，用字以香港常用正體字為準；個別學校課本進度不同，宜以校內課程為準。</li>
+    </ul>
+  </div>
+
+  <footer>
+    香港中文課程 K1–S6 · 教學內容與測驗示例，供家長、教師與學生參考。<br>
+    資料整理依教育局課程文件與考評局評核安排；詞彙量與年級對應屬參考區間。
+  </footer>
+</main>
+
+<script src="assets/data/core.js"></script>
+<script src="assets/data/k.js"></script>
+<script src="assets/data/ks1.js"></script>
+<script src="assets/data/ks2.js"></script>
+<script src="assets/data/ks3.js"></script>
+<script src="assets/data/ks4.js"></script>
+<script>
+(function(){
+  var stageOrder = ['k','ks1','ks2','ks3','ks4'];
+  var current = 'k';
+
+  // stats
+  var words = 0, qs = 0;
+  Object.keys(CN.grades).forEach(function(id){
+    var g = CN.grades[id];
+    words += (g.words||[]).length;
+    ['basic','advanced','challenge'].forEach(function(k){ qs += (g.quiz[k]||[]).length; });
+  });
+  Object.keys(CN.bank).forEach(function(k){ qs += CN.bank[k].length; });
+  document.getElementById('stats').innerHTML = [
+    ['15','年級 K1–S6'],['5','學習階段'],['6','學習範疇'],
+    [words+'','詞語示例'],[qs+'','測驗題目']
+  ].map(function(s){ return '<div class="stat"><b>'+s[0]+'</b><span>'+s[1]+'</span></div>'; }).join('');
+
+  // stage strip
+  var strip = document.getElementById('stageStrip');
+  strip.innerHTML = stageOrder.map(function(s){
+    var st = CN.stages[s];
+    return '<button data-s="'+s+'">'+st.name+' '+st.range+'</button>';
+  }).join('');
+  strip.addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    current = b.dataset.s; paint();
+  });
+
+  // strands
+  document.getElementById('strandList').innerHTML = CN.strands.map(function(s){
+    return '<div class="strand"><b>'+s.name+'</b><p>'+s.hint+'</p></div>';
+  }).join('');
+
+  function paint(){
+    Array.prototype.forEach.call(strip.children, function(b){
+      b.classList.toggle('on', b.dataset.s===current);
+    });
+    var st = CN.stages[current];
+    var list = CN.stageGrades(current);
+    document.getElementById('gradeGrid').innerHTML = list.map(function(g, i){
+      var d = CN.grades[g.id];
+      var n = d ? (d.words||[]).length : 0;
+      return '<a class="gcard" href="grade.html?g='+g.id+'" style="--c:'+st.color+'">'
+        + '<div class="g">'+g.name+'</div>'
+        + '<div class="a">'+g.band+' · '+g.age+'</div>'
+        + '<div class="a">'+(d? d.words.length : 0)+' 個詞語 · 3 級測驗</div>'
+        + '<div class="bars"><i></i><i></i><i></i><i></i></div>'
+        + '</a>';
+    }).join('')
+    + '<div class="gcard" style="--c:'+st.color+';background:#fbfcfd">'
+    + '<div class="g">'+st.range+'</div><div class="a">'+st.desc+'</div>'
+    + '<div class="a" style="margin-top:8px">共 '+list.length+' 個年級</div></div>';
+  }
+  paint();
+})();
+</script>
+</body>
+</html>

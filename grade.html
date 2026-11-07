@@ -25,7 +25,7 @@
   <div id="sections"></div>
 
   <section class="panel" style="--c:#1b64f2;margin-top:18px">
-    <h3>測驗這一級</h3>
+    <h3 id="quizTitle">測驗這一級</h3>
     <p class="muted" style="margin:0 0 4px">三種難度，每份約 8 題，題目隨機抽出。做完即時批改並解釋。</p>
     <div class="levels" id="levels"></div>
   </section>
@@ -39,6 +39,8 @@
 <script src="assets/data/ks2.js"></script>
 <script src="assets/data/ks3.js"></script>
 <script src="assets/data/ks4.js"></script>
+<script src="assets/data/extra.js"></script>
+<script src="assets/js/questions.js"></script>
 <script>
 (function(){
   function param(k){
@@ -63,7 +65,7 @@
     + '<span class="chip hl">'+st.range+'</span>'
     + '<span class="chip">詞語 '+words.length+' 個</span>'
     + '<span class="chip">六大範疇</span>'
-    + '<span class="chip">3 級測驗</span>'
+    + '<span class="chip">題庫 '+CNQ.count(gid)+' 題</span>'
     + '</div>';
 
   // tabs
@@ -123,12 +125,15 @@
       + '<b>'+l[1]+'</b><span>'+l[2]+'</span></a>';
   }).join('');
 
+  document.getElementById('quizTitle').textContent = '測驗這一級 · 題庫共 ' + CNQ.count(gid) + ' 題';
+
   // prev/next
   var prev = CN.prevGrade(gid), next = CN.nextGrade(gid);
   document.getElementById('foot').innerHTML =
     '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">'
     + (prev ? '<a class="btn ghost sm" href="grade.html?g='+prev.id+'">← '+prev.name+'</a>' : '')
     + (next ? '<a class="btn sm" href="grade.html?g='+next.id+'" style="--c:'+st.color+'">'+next.name+' →</a>' : '')
+    + '<a class="btn ghost sm" href="bank.html?g='+gid+'">看全部 '+CNQ.count(gid)+' 題</a>'
     + '<a class="btn ghost sm" href="index.html">全部年級</a></div>'
     + '課程架構依教育局《中國語文教育學習領域課程指引》及《中國語文課程指引》；詞彙量屬參考區間，宜以校內課程為準。';
 

@@ -64,6 +64,8 @@
 <script src="assets/data/ks2.js"></script>
 <script src="assets/data/ks3.js"></script>
 <script src="assets/data/ks4.js"></script>
+<script src="assets/data/extra.js"></script>
+<script src="assets/js/questions.js"></script>
 <script>
 (function(){
   var stageOrder = ['k','ks1','ks2','ks3','ks4'];
@@ -72,11 +74,9 @@
   // stats
   var words = 0, qs = 0;
   Object.keys(CN.grades).forEach(function(id){
-    var g = CN.grades[id];
-    words += (g.words||[]).length;
-    ['basic','advanced','challenge'].forEach(function(k){ qs += (g.quiz[k]||[]).length; });
+    words += (CN.grades[id].words||[]).length;
+    qs += CNQ.count(id);
   });
-  Object.keys(CN.bank).forEach(function(k){ qs += CN.bank[k].length; });
   document.getElementById('stats').innerHTML = [
     ['15','年級 K1–S6'],['5','學習階段'],['6','學習範疇'],
     [words+'','詞語示例'],[qs+'','測驗題目']

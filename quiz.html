@@ -24,6 +24,8 @@
 <script src="assets/data/ks2.js"></script>
 <script src="assets/data/ks3.js"></script>
 <script src="assets/data/ks4.js"></script>
+<script src="assets/data/extra.js"></script>
+<script src="assets/js/questions.js"></script>
 <script>
 (function(){
   function param(k){
@@ -39,88 +41,9 @@
   var st = CN.stageOf(g);
   document.documentElement.style.setProperty('--c', st.color);
   var levelName = {1:'基礎',2:'進階',3:'挑戰'}[level];
+  var TOTAL = CNQ.count(gid);
 
-  /* ---------- 產生題目 ---------- */
-  function otherMeans(word, pool){
-    var out = [];
-    pool.forEach(function(x){ if(x.w!==word.w && out.indexOf(x.mean)<0) out.push(x.mean); });
-    return out;
-  }
-  function meaningQ(word, pool){
-    var wrong = CN.pick(otherMeans(word, pool), 3);
-    if(wrong.length < 3) return null;
-    return {tag:'詞義', q:'「'+word.w+'」的意思是？', sub:'詞性：'+word.pos, opts:[word.mean].concat(wrong), a:0, why:'「'+word.w+'」（'+word.py+'）：'+word.mean+'。例句：'+word.ex};
-  }
-  function clozeQ(word, pool){
-    if(!word.ex || word.ex.indexOf(word.w)<0) return null;
-    var others = pool.filter(function(x){return x.w!==word.w;});
-    var wrong = CN.pick(others.map(function(x){return x.w;}), 3);
-    if(wrong.length<3) return null;
-    return {tag:'詞語運用', q:'選出最適合填在橫線的詞語：', sub:word.ex.replace(word.w,'＿＿＿＿'), opts:[word.w].concat(wrong), a:0, why:'原句用「'+word.w+'」：'+word.ex};
-  }
-  function listenQ(item){
-    return {tag:'聆聽', q:item.q, sub:item.sub||'', opts:item.opts, a:item.a, why:item.why, listen:item.listen};
-  }
-
-  function build(){
-    var pool = (g.words||[]).slice();
-    // 同階段詞語作干擾項，增加難度
-    var sib = [];
-    CN.stageGrades(g.stage).forEach(function(x){
-      var d = CN.byId(x.id);
-      if(d && d.words) sib = sib.concat(d.words);
-    });
-    var distractorPool = pool.concat(sib);
-    var qs = [];
-
-    var nMeaning = level===1?3:(level===2?2:0);
-    var nCloze   = level===1?3:(level===2?3:2);
-    CN.pick(pool, nMeaning).forEach(function(w){
-      var q = meaningQ(w, distractorPool); if(q) qs.push(q);
-    });
-    CN.pick(pool, nCloze).forEach(function(w){
-      var q = clozeQ(w, distractorPool); if(q) qs.push(q);
-    });
-
-    var hand = (g.quiz && g.quiz[['basic','advanced','challenge'][level-1]]) || [];
-    hand.forEach(function(item){
-      if(item.listen) qs.push(listenQ(item));
-      else qs.push({tag:item.tag, q:item.q, sub:item.sub||'', opts:item.opts, a:item.a, why:item.why});
-    });
-
-    if(level===3){
-      var bank = CN.bank[g.stage] || [];
-      CN.pick(bank, 3).forEach(function(item){
-        qs.push({tag:'階段綜合 · '+item.tag, q:item.q, sub:item.sub||'', opts:item.opts, a:item.a, why:item.why});
-      });
-    }
-
-    // 去重（同題目文字）
-    var seen = {}, uniq = [];
-    qs.forEach(function(q){ var key=q.q+'|'+(q.sub||''); if(!seen[key]){ seen[key]=1; uniq.push(q); } });
-    // 不足 8 題時，用同級詞語補足
-    if(uniq.length < 8){
-      var reserve = [];
-      pool.forEach(function(w){
-        var m = meaningQ(w, distractorPool); if(m) reserve.push(m);
-        var c = clozeQ(w, distractorPool); if(c) reserve.push(c);
-      });
-      CN.shuffle(reserve).forEach(function(q){
-        var key = q.q+'|'+(q.sub||'');
-        if(uniq.length < 8 && !seen[key]){ seen[key]=1; uniq.push(q); }
-      });
-    }
-    qs = CN.shuffle(uniq).slice(0, 8);
-
-    // 打亂選項
-    return qs.map(function(q){
-      var correct = q.opts[q.a];
-      var opts = CN.shuffle(q.opts);
-      return {tag:q.tag, q:q.q, sub:q.sub, opts:opts, a:opts.indexOf(correct), why:q.why, listen:q.listen};
-    });
-  }
-
-  var questions = build();
+  var questions = CNQ.session(gid, level, 10);
   var idx = 0, answers = [], answered = false;
 
   if(!questions.length){
@@ -135,7 +58,6 @@
     u.lang = 'zh-HK'; u.rate = 0.82;
     speechSynthesis.speak(u);
   }
-
   function header(){
     return '<div class="crumb" style="margin-top:16px"><a href="index.html">課程總覽</a> ／ '
       + '<a href="grade.html?g='+gid+'">'+g.name+'</a> ／ 測驗 · '+levelName+'</div>';
@@ -144,26 +66,27 @@
   function render(){
     var q = questions[idx];
     var pct = Math.round(idx/questions.length*100);
-    var html = header()
+    app.innerHTML = header()
       + '<div class="qbar"><span>'+levelName+'</span><div class="progress"><i style="width:'+pct+'%"></i></div><span>'+(idx+1)+' / '+questions.length+'</span></div>'
       + '<div class="qcard">'
       + '<span class="qtag">'+q.tag+'</span>'
       + '<p class="qtext">'+q.q+'</p>'
       + (q.sub ? '<p class="qsub">'+q.sub+'</p>' : '')
-      + (q.listen ? '<div style="margin-top:12px"><button class="btn ghost sm" id="play">▶ 播放語音</button> <span class="muted">（用瀏覽器粵語語音，如無聲請見下方文字）</span><p class="muted" id="shown" style="display:none;margin-top:8px">'+q.listen+'</p></div>' : '')
+      + (q.listen ? '<div style="margin-top:12px"><button class="btn ghost sm" id="play">▶ 播放語音</button> <span class="muted">（粵語語音；如無聲，可按此顯示文字）</span><p class="muted" id="shown" style="display:none;margin-top:8px">'+q.listen+'</p></div>' : '')
       + '<div class="opts" id="opts">'
-      + q.opts.map(function(o,i){
-          return '<button class="opt" data-i="'+i+'"><span class="k">'+'ABCD'[i]+'</span><span>'+o+'</span></button>';
-        }).join('')
+      + q.opts.map(function(o,i){ return '<button class="opt" data-i="'+i+'"><span class="k">'+'ABCD'[i]+'</span><span>'+o+'</span></button>'; }).join('')
       + '</div>'
       + '<div class="fb" id="fb"></div>'
       + '<div class="qfoot"><button class="btn" id="next" disabled>下一題</button>'
       + '<a class="btn ghost sm" href="grade.html?g='+gid+'">離開</a></div>'
-      + '</div>';
-    app.innerHTML = html;
+      + '</div>'
+      + '<p class="muted" style="text-align:center;margin-top:14px">本年級題庫共 '+TOTAL+' 題，每次隨機抽 10 題 · <a href="bank.html?g='+gid+'">看全部題目</a></p>';
 
     if(q.listen){
-      document.getElementById('play').addEventListener('click', function(){ speak(q.listen); });
+      document.getElementById('play').addEventListener('click', function(e){
+        e.preventDefault(); speak(q.listen);
+        document.getElementById('shown').style.display = 'block';
+      });
       setTimeout(function(){ speak(q.listen); }, 350);
     }
     document.getElementById('opts').addEventListener('click', function(e){
@@ -208,22 +131,18 @@
         + (a.ok?'':'　正確答案：'+a.q.opts[a.q.a])+'</div>'
         + '<div class="muted" style="margin-top:2px">'+a.q.why+'</div></div>';
     }).join('');
-
     var nextLvl = level<3 ? '<a class="btn" href="quiz.html?g='+gid+'&level='+(level+1)+'">試「'+{2:'進階',3:'挑戰'}[level+1]+'」</a>' : '';
     app.innerHTML = header()
       + '<div class="qcard"><div class="result">'
       + '<div class="score">'+pctScore+'<small> 分</small></div>'
-      + '<div class="msg">'+right+' / '+questions.length+' 題正確 · '+levelName+'<br>'+msg+'</div>'
-      + '</div>'
+      + '<div class="msg">'+right+' / '+questions.length+' 題正確 · '+levelName+'<br>'+msg+'</div></div>'
       + '<div class="qfoot" style="justify-content:center;flex-wrap:wrap">'
-      + '<button class="btn" id="again">再做一次</button>'
-      + nextLvl
-      + '<a class="btn ghost" href="grade.html?g='+gid+'">返回年級</a>'
-      + '</div>'
-      + '<div class="review"><h4 style="margin:22px 0 4px;font-size:14px;color:var(--sub)">逐題檢討</h4>'+review+'</div>'
-      + '</div>';
+      + '<button class="btn" id="again">再做一次</button>' + nextLvl
+      + '<a class="btn ghost" href="bank.html?g='+gid+'">題庫</a>'
+      + '<a class="btn ghost" href="grade.html?g='+gid+'">返回年級</a></div>'
+      + '<div class="review"><h4 style="margin:22px 0 4px;font-size:14px;color:var(--sub)">逐題檢討</h4>'+review+'</div></div>';
     document.getElementById('again').addEventListener('click', function(){
-      questions = build(); idx=0; answers=[]; answered=false; render(); window.scrollTo({top:0});
+      questions = CNQ.session(gid, level, 10); idx=0; answers=[]; answered=false; render(); window.scrollTo({top:0});
     });
   }
 
